@@ -101,9 +101,6 @@ static void Main()
 }
 ```
 
-```cs
-```
-
 
 <br><br><br><br><br><br>
 
@@ -113,5 +110,199 @@ static void Main()
 
 
 # <a id="delegate">デリゲート</a>
+* メソッドを格納する型を定義することができる
+    * メソッドの型は種類が多いため、intやdoubleのような予約語をメソッドには割り当てることができない。そこで考えられたのがデリゲート。
+*  変数にメソッドを格納、引数にメソッドを渡すことが可能
+## 基本
+* クラスメソッド、インスタンスメソッド両方格納できる
+```cs
+// 基本
+public class Sample
+{
+    // 引数: void、戻り値: voidのメソッドを格納する
+    delegate void MyType();
+    public static void Func1()
+    {
+        Console.WriteLine("hello world");
+    }
+    public static void Func2()
+    {
+        Console.WriteLine("good");
+    }
+    static void Main()
+    {
+        MyType myType = Func1;
+        myType += Func2;
+        // 格納したメソッドの一括呼び出し
+        myType.Invoke(); // hello worldとgoodが出力
+    }
+}
+```
+* デリゲートにはAction型、Func型、Predicate型が用意されている。
+    * Action: 任意個の引数を取り、かつ、戻り値のないメソッドを格納する型
+    * Func: 任意個の引数を取り、かつ、戻り値のあるメソッドを格納する型
+    * Predicate: 任意個の引数を取り、かつ、戻り値の型がBooleanであるようなメソッドを格納する型
+```cs
+public class Sample
+{
+    public static void ActionFunc(int n)
+    {
+        Console.WriteLine("ActionFunc");
+    }
+    public static int FuncFunc(string s)
+    {
+        Console.WriteLine("FuncFunc");
+        return 0;
+    }
+    public static bool BoolFunc(int n)
+    {
+        Console.WriteLine("BoolFunc");
+        return true;
+    }
+    static void Main()
+    {
+        Action<int> action = ActionFunc;
+        // Func delegateのみ<T1, ..., TResult>で定義する
+        Func<string, int> func = FuncFunc;
+        Predicate<int> predicate = BoolFunc;
+        action.Invoke(1);
+        func.Invoke("s");
+        predicate.Invoke(1);
+    }
+}
+```
+* 見る機会は少ないdelegate
+    * Predicate<T>型: ListクラスのFindAllメソッドの引数
+    * Convertor<TInput, TOutput>型: ListクラスのConvertAllメソッドの引数
+    * Comparison<T>型: ListクラスのSortメソッドの引数
+
+## 応用
+* 音やエフェクトを〇秒後に実行する処理
+
+```cs
+public class DelayGenerator
+{
+    // publicにしないとGenerateDelay()よりもアクセシビリティのレベルが低くなってしまう
+    // publicにするか、Sampleクラスで定義する。
+    // PlayBGM()とPlayEffect()を入れられる型
+    public delegate void DelayedMethod();
+    // DelayedMethod型をActionに変更可能
+    public void GenerateDelay(DelayedMethod target, int delayTime)
+    {
+        Thread.Sleep(delayTime * 1000);
+        target.Invoke();
+    }
+}
+
+public class Sample
+{
+    private static void PlayBGM()
+    {
+        Console.WriteLine("Play BGM");
+    }
+    private static void PlayEffect()
+    {
+        Console.WriteLine("Play Effect");
+    }
+    static void Main()
+    {
+        DelayGenerator delayGenerator = new DelayGenerator();
+        delayGenerator.GenerateDelay(PlayBGM, 1);
+        delayGenerator.GenerateDelay(PlayEffect, 3);
+    }
+}
+```
+* 非同期処理をするときに使えるかな。DBからデータ引っ張ってくる間にフレームだけ先に表示させておくみたいな。
+
+
+
 # <a id="lambda">ラムダ式</a>
+## ラムダ式の成り立ち
+* 仕様: 定義された配列から任意の値が要素と一致する場合にカウントする関数
+```cs
+static int Count(int num)
+{
+    var count = 0;
+    var numbers = new int[] { 1, 2, 3 };
+    foreach (var item in numbers)
+    {
+        if (num == item) count++;
+    }
+    return count;
+}
+
+```
+* 仕様変更: 定義された配列から任意の配列に変更する
+```cs
+static int Count(int[] numbers, int num)
+{
+    int count = 0;
+    foreach (var item in numbers)
+    {
+        if (num == item) count++;
+    }
+    return count;
+}
+```
+* 仕様変更: 「要素と一致する場合にカウントする」条件から任意の条件にしたがってカウントするように変更する。
+    * デリゲートを使用する
+```cs
+// public delegate bool Condition(int value);で自作のデリゲート型を定義してもよい
+public static int Count(int[] numbers, Predicate<int> conditions)
+{
+    int count = 0;
+    foreach (var item in numbers)
+    {
+        // 新しい条件は関数のみ定義すればよい。
+        if (conditions(item))
+            count++;
+    }
+    return count;
+}
+public static bool IsEven(int n)
+{
+    return n % 2 == 0;
+}
+public static bool IsOdd(int n)
+{
+    return n % 2 != 0;
+}
+public static bool IsMatchFive(int n)
+{
+    return n == 5;
+}
+static void Main()
+{
+    int[] numbers = new int[] { 1, 2, 3, 4, 5 };
+    Console.WriteLine(Count(numbers, IsEven));
+    Console.WriteLine(Count(numbers, IsOdd));
+    Console.WriteLine(Count(numbers, IsMatchFive));
+}
+```
+* 一度しか使わない関数でも、毎回定義するとコード量が多くなってしまい冗長になる問題
+    * 匿名関数を使用する
+    * delegate (型 引数) { 処理 }の形
+```cs
+static void Main()
+{
+    int[] numbers = new int[] { 1, 2, 3, 4, 5 };
+    Console.WriteLine(Count(numbers, IsEven));
+    Console.WriteLine(Count(numbers, IsOdd));
+    Console.WriteLine(Count(numbers, IsMatchFive));
+    Console.WriteLine(Count(numbers, delegate (int n) { return n == 2; }));
+}
+```
+* 匿名関数はdelegateキーワードや{}を使っているので初見は分かりにくい
+    * より分かりやすくしたラムダ式が登場！
+    * ラムダ式はメソッドのためデリゲートの型に格納可能。
+```cs
+Count(numbers, delegate (int n) { return n == 2; });
+// 冗長なラムダ式
+// =>（ラムダ演算子：アロー演算子）を使用し左側に引数宣言、右側にメソッドの本体を記述する
+Count(numbers, (int n) => { return n == 2; })
+// 引数の型は使用される関数の引数で定義されているため省略可能。また引数が一つの場合は()不要:
+// 中身が一行のステートメントなら{}とreturn省略可能
+Count(numbers, n => n == 2);
+```
+
 # <a id="extendedMethod">拡張メソッド</a>
