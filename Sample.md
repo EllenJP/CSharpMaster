@@ -106,6 +106,61 @@ static void Main()
 
 # LINQ
 * [デリゲート](#delegate)、[ラムダ式](#lambda)、[拡張メソッド](#extendedMethod)を先に理解するとわかりやすい
+* IEnumerable<T>インターフェースを実装しているオブジェクトに対して操作可能。
+    * List, Dictionary, Array, String, etc...
+* Where()とSelect()をまず押さえる。
+## Where()
+* シーケンス（連続するもの）から条件を満たしたものだけを抽出するメソッド（フィルター）
+* Where()で対象を絞り込み、Select()で絞り込んだ対象に対して処理を行う。
+* IEnumerable<T>を返す。ToArray()やToList()、ToDictionary()をよく使ったりする。
+## Select()
+* シーケンスから各要素に対して変換処理（射影）を行う。
+    * 射影とはコレクションの中から条件に一致した要素を必要なら加工し取り出す処理（わかりにくいので、全ての要素に対して変換処理を行うでよい）
+* IEnumerable<T>を返す。ToArray()やToList()、ToDictionary()をよく使ったりする。
+* Where()で対象を絞り込み、Select()で絞り込んだ対象に対して処理を行う。 
+```cs
+List<int> list = new List<int>() { 1, 2, 3, 4 };
+var tmp = list.Select(x => x * 10);
+
+// 以下でもコンパイルは通る。使われていないので使わない。
+var tmp = list.Select(delegate (int x) { return 10 * x; });
+delegate int MyDelegate(int x);
+MyDelegate myDelegate = Calc;
+var tmp = list.Select(x => Calc(x)).ToArray();
+var tmp = list.Select(Calc).ToArray();
+var tmp = list.Select(x => myDelegate(x)).ToArray();
+static int Calc(int n)
+{
+    return n * 10;
+}
+```
+## 遅延評価と即時評価
+* 即時評価: 評価後は内容は変わらない
+* 遅延評価: 内容を取り出す度に評価する
+* 基本は小メモリで処理量が少ない遅延評価を使用するが、何度も同じ評価結果を使用する場合はキャッシュするために即時評価にする。
+```cs
+// 要素追加時の評価結果が異なる。
+// 即時評価
+List<string> names = new List<string>() { "apple", "blueberry", "cucumber" };
+var query = names.Where(s => s.Length <= 5).ToList();
+foreach (var item in query) 
+    Console.WriteLine(item); // apple
+// eggを追加する。
+names.Add("egg");
+foreach (var item in query) 
+    Console.WriteLine(item); // apple
+
+// 遅延評価
+List<string> names = new List<string>() { "apple", "blueberry", "cucumber" };
+var query = names.Where(s => s.Length <= 5);
+foreach (var item in query) 
+    Console.WriteLine(item); // apple
+// eggを追加する。
+names.Add("egg");
+foreach (var item in query) 
+    Console.WriteLine(item); // apple, egg
+```
+
 
 
 
@@ -306,3 +361,94 @@ Count(numbers, n => n == 2);
 ```
 
 # <a id="extendedMethod">拡張メソッド</a>
+* 既存の型に新規メソッドを追加することができる。
+    * 派生クラスに処理を記載することもできるが、sealed修飾子がついている場合はできない。
+    * 使用する場合はインスタンスメソッドの呼び出し方をするが定義するときは静的メソッドの書き方をしているので混乱しないように。
+* 拡張メソッドは多用すると、どこに何の拡張機能があるのかチームの混乱を招く。
+* 拡張メソッドと既存のメソッドが同名の場合は既存のメソッドが優先される。
+    * string.ToString()とか
+```cs
+// IEnumerableを実装しているstringクラスでReverse()時にIEnumerable<char>を返すのではなく、string型を返したい
+static void Main(string[] args)
+{
+    string str = "hello";
+    // str変数がReverseメソッドの第1引数にわたる
+    // 注意: string.Revese()は存在しない。stringがIEnumerableインターフェースを実装しているため。
+    string revStr = str.Reverse();
+}
+ // 拡張メソッドを定義するためには静的クラスにする
+ public static class StringExtensions 
+ {
+     // 静的メソッド+第一引数にthis追加+第二引数以降に宣言したものが拡張メソッド呼び出し時の引数となる
+     public static string Reverse(this string str) 
+     {
+         Console.WriteLine("拡張メソッドを呼び出しました");
+         if (string.IsNullOrWhiteSpace(str)) return string.Empty;
+         char[] chars = str.ToCharArray();
+         Array.Reverse(chars);
+         return new string(chars);
+     }
+ }
+```
+```cs
+// コレクション反復列挙子の拡張メソッド
+// namespaceはMyExtensionsとかにしておくと良い
+public static class EnumerableExtensions // 拡張メソッドを定義するためには静的クラスにする
+{
+    // <T>はlist<int>とint[]はint、Dictionary<int, string>は<KeyPairValue<int, string>となる
+    public static void ForEach<T>(this IEnumerable<T> enumerable, Action<T> action)
+    {
+        foreach (T item in enumerable)
+        {
+            action(item);
+        }
+    }
+}
+
+List<int> list = new List<int>() { 1, 2, 3, 4 };
+int[] array = new int[] { 5, 6, 7, 8 };
+// Dictionary型はkeyAndValuePairs型{[1, "hello"]}がTに入る。
+Dictionary<int, string> dic = new Dictionary<int, string>() {
+    {1, "hello" },
+    {2, "say" },
+};
+
+list.ForEach(s => Console.WriteLine(s));
+array.ForEach(s => Console.WriteLine(s));
+dic.ForEach(s => Console.WriteLine(s));
+```
+* LINQのSelect()も拡張メソッドで定義されている。
+```cs
+// Select<TSource, TResult>は、関数で使うジェネリック型を定義しているだけ。
+// 「this IEnumerable<TSource> source」よりIEnumerableインターフェースを実装している型でSelect()が呼ばれる
+// IEnumerable<T>は列挙する機能を持つため、TSourceには列挙する要素の型が入る。
+// 例）list<int>ならTSource = int
+// 第二引数（Func<TSource, TResult>）から呼び出し側の引数となる。
+public static IEnumerable<TResult> Select<TSource, TResult>(this IEnumerable<TSource> source, Func<TSource, TResult> selector);
+
+// public static IEnumerable<int> Select(this IEnumerable<int> source, Func<int, int>)
+// x => x * 10: Func<int, int> int型を引数に取り、int型を返す
+List<int> list = new List<int>() { 1, 2, 3, 4 };
+var tmp = list.Select(x => x * 10);
+
+// Select()が使えない状況
+// voidは変数の型として使用できない。つまり、Func<>のTResultには戻り値がvoidの関数は使用できない。エラーとしては、型引数を使い方から推論することができないため。
+list.Select(x => Calc(x)); // OK
+list.Select(x => VoidFunc(x)); // NG
+list.Select(x => Console.WriteLine(x)); // NG
+static int Calc(int n)
+{
+    return n * 10;
+}
+static void VoidFunc(int n)
+{
+    return;
+}
+```
+* LINQのWhere()も拡張メソッドで定義されている。
+```cs
+// Select()とほぼ同じ
+// 「Func<TSource, bool> predicate」の箇所が異なる。TSource型を引数にbool値を返すメソッドのみ使える。
+public static IEnumerable<TSource> Where<TSource>(this IEnumerable<TSource> source, Func<TSource, bool> predicate);
+```
+
