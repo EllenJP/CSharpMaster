@@ -452,3 +452,92 @@ static void VoidFunc(int n)
 public static IEnumerable<TSource> Where<TSource>(this IEnumerable<TSource> source, Func<TSource, bool> predicate);
 ```
 
+
+<br>
+
+# インターフェース
+
+# === ここからSOLID Principle ===
+
+# オープンクローズドの原則
+* 
+
+## 初期の仕様
+* 4人パーティで敵と戦う
+* パーティは剣士、魔法使い、騎士、弓使いの4人
+* 各キャラクターのコマンドは、こうげき、ぼうぎょ、アイテムの3つ。
+## 方針
+* キャラクターごとのクラスを作り、パーティ編成のために各クラスのインスタンスをリストに追加して表現したい。
+* そのためにObject型でリストを作ればよいと考えがちだが、パーティ全員に同じコマンドを入力したいときに、いちいちキャストしてメソッドを呼び出さなければいけなくなる
+```cs
+var playerList = new List<Object>()
+{
+    new SwordMan(),
+    new Wizard(),
+    new Knight(),
+    new Archer(),
+};
+playerList[0]
+```
+
+
+たたかう継承元の場合にObject型のみしかできない
+```cs
+// 呼び出すときに
+public sealed class SwordMan
+{
+    private static readonly string Name = "剣士";
+    private static readonly int OffensiveAbility = 10;
+    public void Attack() { Console.WriteLine($"{Name}は{OffensiveAbility}のこうげきをした。"); }
+    public void Defend() { Console.WriteLine($"{Name}はぼうぎょした。"); }
+    public void UseItem() { Console.WriteLine($"{Name}はアイテムをつかった。"); }
+}
+public sealed class Wizard
+{
+    private static readonly string Name = "魔法使い";
+    private static readonly int OffensiveAbility = 10;
+    public void Attack() { Console.WriteLine($"{Name}は{OffensiveAbility}のこうげきをした。"); }
+    public void Defend() { Console.WriteLine($"{Name}はぼうぎょした。"); }
+    public void UseItem() { Console.WriteLine($"{Name}はアイテムをつかった。"); }
+}
+public sealed class Knight
+{
+    private static readonly string Name = "騎士";
+    private static readonly int OffensiveAbility = 10;
+    public void Attack() { Console.WriteLine($"{Name}は{OffensiveAbility}のこうげきをした。"); }
+    public void Defend() { Console.WriteLine($"{Name}はぼうぎょした。"); }
+    public void UseItem() { Console.WriteLine($"{Name}はアイテムをつかった。"); }
+}
+public sealed class Archer
+{
+    private static readonly string Name = "剣士";
+    private static readonly int OffensiveAbility = 10;
+    public void Attack() { Console.WriteLine($"{Name}は{OffensiveAbility}のこうげきをした。"); }
+    public void Defend() { Console.WriteLine($"{Name}はぼうぎょした。"); }
+    public void UseItem() { Console.WriteLine($"{Name}はアイテムをつかった。"); }
+}
+
+```
+
+
+
+
+親クラスを継承するやり方は、好ましくない。なぜなら
+
+## 仕様の変更が発生！！
+* 新規キャラクターの追加：治癒士
+* コマンドは同じ
+
+## さらに仕様の変更が発生！！
+* 一定確率で、クリティカル（1.5倍）が発生する
+
+```cs
+
+
+
+```
+
+
+
+
+
