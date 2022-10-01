@@ -1,5 +1,19 @@
-# constとreadonly、static readonly使い分け
+# 目次
+* [constとreadonly、static readonly使い分け](#constとreadonly、staticreadonly使い分け)
+* [演算子](#演算子)
+* [LINQ](#LINQ)
+* [デリゲート](#delegate)
+* [ラムダ式](#lambda)
+* [拡張メソッド](#extendedMethod)
+* [インターフェース](#インターフェース)
 
+
+<a id=""></a>
+
+
+
+
+# constとreadonly、static readonly使い分け<a id="constとreadonly、staticreadonly使い分け"></a>
 ## const
 * コンパイル時に値を埋め込む（展開される）
 * 各インスタンスで常に同じ値を取るため、実質的にstatic
@@ -52,9 +66,11 @@ public class Test
 ### デメリット
 * constの代用としての意味合いが強く、readonlyに重きを置いた使い方が今のところ思いつかない。
 
-<br><br><br><br><br><br>
 
-# 演算子
+<br><br><br>
+
+
+# 演算子<a id="演算子"></a>
 ## 三項条件演算子
 ```cs
 int temp = 25;
@@ -102,9 +118,10 @@ static void Main()
 ```
 
 
-<br><br><br><br><br><br>
+<br><br><br>
 
-# LINQ
+
+# LINQ<a id="LINQ"></a>
 * [デリゲート](#delegate)、[ラムダ式](#lambda)、[拡張メソッド](#extendedMethod)を先に理解するとわかりやすい
 * IEnumerable<T>インターフェースを実装しているオブジェクトに対して操作可能。
     * List, Dictionary, Array, String, etc...
@@ -162,6 +179,7 @@ foreach (var item in query)
 ```
 
 
+<br><br><br>
 
 
 # <a id="delegate">デリゲート</a>
@@ -270,6 +288,8 @@ public class Sample
 * 非同期処理をするときに使えるかな。DBからデータ引っ張ってくる間にフレームだけ先に表示させておくみたいな。
 
 
+<br><br><br>
+
 
 # <a id="lambda">ラムダ式</a>
 ## ラムダ式の成り立ち
@@ -359,6 +379,10 @@ Count(numbers, (int n) => { return n == 2; })
 // 中身が一行のステートメントなら{}とreturn省略可能
 Count(numbers, n => n == 2);
 ```
+
+
+<br><br><br>
+
 
 # <a id="extendedMethod">拡張メソッド</a>
 * 既存の型に新規メソッドを追加することができる。
@@ -453,7 +477,7 @@ public static IEnumerable<TSource> Where<TSource>(this IEnumerable<TSource> sour
 ```
 
 
-<br>
+<br><br><br>
 
 # インターフェース
 
