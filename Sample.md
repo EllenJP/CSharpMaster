@@ -1,4 +1,5 @@
 # 目次
+* [コーディング](#コーディング)
 * [constとreadonly、static readonly使い分け](#constとreadonly、staticreadonly使い分け)
 * [演算子](#演算子)
 * [LINQ](#LINQ)
@@ -10,7 +11,41 @@
 
 <a id=""></a>
 
+# コーディング<a id="コーディング"></a>
+## if文の{ }は複数行の時は省略しない
+* 中身のステートメントが1つだけなら中括弧はいらないが、1つのステートメントが複数行にまたがるときは中括弧を付けると良い。
+* 1行の場合でも中括弧を付けるチームもあるので、適宜合わせる。
+```cs
+// NG1
+var flagA = true;
+var flagB = false;
+var flagC = true;
+if (flagA)
+{
+    Console.WriteLine("hello0");
+}
+else
+    if (flagB)
+    {
+        Console.WriteLine("hello1");
+    }
+    else if (flagC)
+    {
+        Console.WriteLine("hello2");
+    }
+    if (flagA) // else文から外れている
+    {
+        Console.WriteLine("hello3");
+    }
+    Console.WriteLine("hello4"); // else文から外れている
+    Console.WriteLine("hello5"); // else文から外れている
 
+// NG2
+if (FlagA)
+    Console.WriteLine($"Hello1");
+    Console.WriteLine($"Hello2"); // if文には入らない
+
+```
 
 
 # constとreadonly、static readonly使い分け<a id="constとreadonly、staticreadonly使い分け"></a>
